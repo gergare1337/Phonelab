@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phone_Lab</title>
+<style>
+  :root{
+    --accent:#007bff;
+    --card-bg:#fff;
+    --muted:#666;
+    --radius:12px;
+    --max-width:1100px;
+    --gap:16px;
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f5f7fb;
+    margin:0;
+    padding:20px;
+    display:flex;
+    justify-content:center;
+  }
+  .container{width:100%;max-width:var(--max-width);}
+
+  header{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+  }
+  h1{margin:0;font-size:20px;color:#111}
+  .top-controls{display:flex;gap:10px;align-items:center}
+  .search {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:#fff;
+    padding:8px 12px;
+    border-radius:999px;
+    box-shadow: 0 1px 4px rgba(16,24,40,0.06);
+    min-width:220px;
+  }
+  .search input{
+    border:0;outline:0;font-size:14px;width:160px;
+  }
+  nav ul { list-style: none; display: flex; gap: 12px; padding: 0; margin:0; }
+  nav ul li { display: inline; }
+  nav a { text-decoration: none; color: var(--muted); padding:8px 10px; border-radius:8px; display:inline-block; }
+  nav a.active, nav a:hover { color: #fff; background: var(--accent); }
+
+  #sub-menu { margin-top: 14px; display:flex; gap:10px; flex-wrap:wrap; padding:0; list-style:none; }
+  #sub-menu li { display: inline-block; margin-right: 8px; cursor: pointer; background:#fff; padding:6px 10px; border-radius:8px; color:#333; box-shadow: 0 1px 3px rgba(16,24,40,0.04); }
+  #sub-menu li.active { background: #e8f2ff; border:1px solid var(--accent); color:var(--accent); }
+
+  .controls-row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:12px}
+  .controls-right{display:flex;gap:8px;align-items:center}
+  .select, .btn { background:#fff;padding:8px 10px;border-radius:8px;border:1px solid #eee;cursor:pointer;}
+  .btn { background:var(--accent); color:#fff; border:0; }
+
+  .products { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap); margin-top: 18px; }
+  .item { background:var(--card-bg); padding:12px; border-radius:var(--radius); text-align:center; box-shadow: 0 6px 18px rgba(16,24,40,0.04); display:flex;flex-direction:column; align-items:center; gap:8px; }
+  .item img { width:160px; height:160px; object-fit:cover; border-radius:10px; background:#f0f0f0; }
+  .item .name{font-size:14px;color:#111;min-height:38px;}
+  .price { font-weight:700;color:#111;}
+  .meta { color:var(--muted); font-size:13px; }
+  .actions{display:flex;gap:8px;margin-top:auto;width:100%;justify-content:center}
+  .buy-btn { display: inline-block; padding:8px 10px; background:var(--accent); color:#fff; text-decoration:none; border-radius:8px; cursor:pointer; border:0; }
+  .add-btn{ background:#fff;border:1px solid #eee; color:#111; padding:8px 10px;border-radius:8px; cursor:pointer; }
+
+  /* Cart */
+  .cart-btn { position:relative; display:inline-flex; gap:8px; align-items:center; cursor:pointer; }
+  .cart-count{ position:absolute; right:-6px; top:-6px; background:#ff5544; color:#fff; font-size:12px; padding:2px 6px; border-radius:999px; }
+
+  /* Cart panel */
+  .cart-panel{
+    position:fixed; right:18px; top:80px; width:320px; max-height:70vh; overflow:auto;
+    background:#fff;border-radius:12px;padding:12px;box-shadow:0 10px 40px rgba(2,6,23,0.2); display:none; z-index:2000;
+  }
+  .cart-panel h3{margin:0 0 8px 0}
+  .cart-item{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed #eee}
+  .cart-item img{width:56px;height:56px;object-fit:cover;border-radius:8px}
+  .cart-item .ci-name{font-size:13px}
+  .cart-item .ci-price{font-weight:700}
+  .qty{display:flex;gap:6px;align-items:center}
+  .small-btn{padding:4px 8px;border-radius:6px;border:1px solid #eee;background:#fff;cursor:pointer}
+
+  footer{margin-top:28px;padding:18px 10px;color:var(--muted);font-size:13px;text-align:center}
+
+  /* Responsive */
+  @media (max-width:980px){
+    .products{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (max-width:700px){
+    header{flex-direction:column;align-items:flex-start;gap:10px}
+    .products{grid-template-columns:repeat(2,1fr)}
+    .container{padding:8px}
+    .search input{width:110px}
+    .cart-panel{right:12px;left:12px;width:auto}
+  }
+  @media (max-width:420px){
+    .products{grid-template-columns:repeat(1,1fr)}
+    nav ul{flex-wrap:wrap;gap:6px}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div style="display:flex;align-items:center;gap:12px">
+      <h1>Phone_Lab</h1>
+      <nav>
+        <ul id="main-menu">
+          <li><a href="#" data-category="sim" class="active">iPhone SIM</a></li>
+          <li><a href="#" data-category="esim">iPhone eSIM</a></li>
+          <li><a href="#" data-category="accessories">Аксессуары</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="top-controls">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 21l-4.35-4.35" stroke="#666" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="search-input" placeholder="Поиск: модель, цвет, объём">
+      </div>
+
+      <div class="controls-right">
+        <select id="sort" class="select" title="Сортировка">
+          <option value="">Сортировка</option>
+          <option value="price-asc">Цена ↑</option>
+          <option value="price-desc">Цена ↓</option>
+          <option value="name-asc">Название A→Z</option>
+        </select>
+
+        <div class="cart-btn" id="cart-toggle" title="Корзина">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" stroke="#111" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div id="cart-count" class="cart-count" style="display:none">0</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <ul id="sub-menu"></ul>
+
+  <div class="controls-row">
+    <div id="current-info" class="meta">Выберите категорию и модель</div>
+    <div style="display:flex;gap:8px">
+      <button id="clear-filters" class="select">Сброс</button>
+    </div>
+  </div>
+
+  <div class="products" id="products"></div>
+
+  <div class="cart-panel" id="cart-panel" aria-hidden="true">
+    <h3>Корзина</h3>
+    <div id="cart-items"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px">
+      <div><b>Итого:</b> <span id="cart-total">0 ₽</span></div>
+      <div style="display:flex;gap:8px">
+        <button id="clear-cart" class="small-btn">Очистить</button>
+        <button id="checkout" class="btn">Оформить</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>© Phone_Lab — демо-каталог. Замените <code>placeholder.jpg</code> на реальные изображения.</footer>
+</div>
+
+<script>
+// ----------------- КАТАЛОГ (тот же, что был) -----------------
+const catalog = {
+  accessories: [
+    { name: "Блок 20W", price: "2 000 ₽", img: "placeholder.jpg" },
+    { name: "Airpods 4", price: "11 000 ₽", img: "placeholder.jpg" },
+    { name: "Airpods 4 Anc", price: "16 000 ₽", img: "placeholder.jpg" },
+    { name: "Airpods Pro 2", price: "17 000 ₽", img: "placeholder.jpg" },
+    { name: "Airpods Pro 3", price: "20 000 ₽", img: "placeholder.jpg" }
+  ],
+  sim: {
+    "iPhone 13": [
+      { name: "13 128Gb White", price: "39 000 ₽", img: "placeholder.jpg" },
+      { name: "13 128Gb Black", price: "39 000 ₽", img: "placeholder.jpg" },
+      { name: "13 128Gb Blue", price: "39 000 ₽", img: "placeholder.jpg" }
+    ],
+    "iPhone 14": [
+      { name: "14 128Gb Black", price: "43 000 ₽", img: "placeholder.jpg" },
+      { name: "14 128Gb Starlight", price: "43 000 ₽", img: "placeholder.jpg" },
+      { name: "14 128Gb Blue", price: "43 000 ₽", img: "placeholder.jpg" },
+      { name: "14 256Gb Black", price: "53 000 ₽", img: "placeholder.jpg" },
+      { name: "14 256Gb White", price: "53 000 ₽", img: "placeholder.jpg" },
+      { name: "14 256Gb Blue", price: "53 000 ₽", img: "placeholder.jpg" },
+      { name: "14 Plus 128Gb Yellow", price: "54 000 ₽", img: "placeholder.jpg" },
+      { name: "14 Plus 128Gb Starlight", price: "54 000 ₽", img: "placeholder.jpg" },
+      { name: "14 Plus 128Gb Blue", price: "54 000 ₽", img: "placeholder.jpg" }
+    ],
+    "iPhone 15": [
+      { name: "15 128Gb Black", price: "47 000 ₽", img: "placeholder.jpg" },
+      { name: "15 128Gb Pink", price: "47 000 ₽", img: "placeholder.jpg" },
+      { name: "15 128Gb Yellow", price: "47 000 ₽", img: "placeholder.jpg" },
+      { name: "15 128Gb Blue", price: "47 000 ₽", img: "placeholder.jpg" },
+      { name: "15 128Gb Green", price: "47 000 ₽", img: "placeholder.jpg" },
+      { name: "15 256Gb Black", price: "57 000 ₽", img: "placeholder.jpg" },
+      { name: "15 256Gb Pink", price: "57 000 ₽", img: "placeholder.jpg" },
+      { name: "15 256Gb Blue", price: "57 000 ₽", img: "placeholder.jpg" },
+      { name: "15 256Gb Green", price: "57 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Plus 128Gb Black", price: "59 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Plus 128Gb Blue", price: "55 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Plus 128Gb Green", price: "57 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Plus 256Gb Blue", price: "66 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Plus 256Gb Green", price: "69 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Plus 256Gb Yellow", price: "63 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Plus 256Gb Black", price: "66 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Pro Max 256Gb Black", price: "97 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Pro Max 256Gb Natural", price: "97 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Pro Max 256Gb White", price: "97 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Pro Max 512Gb Black", price: "112 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Pro Max 512Gb Natural", price: "112 000 ₽", img: "placeholder.jpg" },
+      { name: "15 Pro Max 512Gb White", price: "112 000 ₽", img: "placeholder.jpg" }
+    ]
+  },
+  esim: {
+    "iPhone 16E": [
+      { name: "16E 128Gb Black", price: "42 000 ₽", img: "placeholder.jpg" },
+      { name: "16E 128Gb White", price: "42 000 ₽", img: "placeholder.jpg" },
+      { name: "16E 256Gb Black", price: "55 000 ₽", img: "placeholder.jpg" },
+      { name: "16E 256Gb White", price: "55 000 ₽", img: "placeholder.jpg" }
+    ],
+    "iPhone 16": [
+      { name: "16 128Gb Black", price: "56 000 ₽", img: "placeholder.jpg" },
+      { name: "16 128Gb Blue", price: "56 000 ₽", img: "placeholder.jpg" },
+      { name: "16 128Gb White", price: "56 000 ₽", img: "placeholder.jpg" },
+      { name: "16 128Gb Pink", price: "56 000 ₽", img: "placeholder.jpg" },
+      { name: "16 128Gb Teal", price: "56 000 ₽", img: "placeholder.jpg" },
+      { name: "16 256Gb Black", price: "63 000 ₽", img: "placeholder.jpg" },
+      { name: "16 256Gb Pink", price: "63 000 ₽", img: "placeholder.jpg" },
+      { name: "16 256Gb Blue", price: "63 000 ₽", img: "placeholder.jpg" },
+      { name: "16 256Gb Teal", price: "63 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Plus 128Gb Black", price: "58 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Plus 128Gb Pink", price: "58 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Plus 128Gb Blue", price: "62 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Plus 128Gb White", price: "58 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Plus 128Gb Teal", price: "62 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Plus 256Gb Black", price: "80 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Plus 256Gb Pink", price: "80 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Plus 256Gb Blue", price: "83 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Plus 256Gb Teal", price: "83 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Plus 256Gb White", price: "83 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 128Gb Black", price: "79 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 128Gb Desert", price: "79 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 128Gb Natural", price: "79 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 128Gb White", price: "79 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 256Gb Black", price: "94 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 256Gb Desert", price: "94 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 256Gb Natural", price: "94 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 256Gb White", price: "94 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 512Gb Black", price: "110 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 512Gb White", price: "110 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 512Gb Desert", price: "110 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 512Gb Natural", price: "110 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 1Tb White", price: "128 000 ₽", img: "placeholder.jpg" },
+      { name: "16 Pro 1Tb Desert", price: "126 000 ₽", img: "placeholder.jpg" }
+    ],
+    "iPhone 17": [
+      { name: "17 256Gb Black", price: "75 000 ₽", img: "placeholder.jpg" },
+      { name: "17 256Gb Blue", price: "75 000 ₽", img: "placeholder.jpg" },
+      { name: "17 256Gb White", price: "75 000 ₽", img: "placeholder.jpg" },
+      { name: "17 256Gb Lavender", price: "75 000 ₽", img: "placeholder.jpg" },
+      { name: "17 256Gb Sage", price: "75 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Air 256Gb Black", price: "75 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Air 256Gb Blue", price: "75 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Air 256Gb White", price: "75 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Air 256Gb Gold", price: "75 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Air 512Gb Black", price: "89 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Air 512Gb Blue", price: "89 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Air 512Gb Gold", price: "89 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Air 512Gb White", price: "89 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Air 1Tb Black", price: "105 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Air 1Tb Blue", price: "105 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Air 1Tb White", price: "110 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Air 1Tb Gold", price: "105 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Pro 256Gb Silver", price: "115 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro 256Gb Blue", price: "115 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro 256Gb Orange", price: "115 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Pro 256Gb Blue eSIM", price: "99 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro 256Gb Orange eSIM", price: "99 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro 256Gb Silver eSIM", price: "99 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Pro 512Gb Orange", price: "123 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro 512Gb Blue", price: "123 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro 512Gb Silver", price: "123 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Pro Max 256Gb Silver", price: "133 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 256Gb Orange", price: "125 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 256Gb Deep Blue", price: "125 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Pro Max 256Gb Blue eSIM", price: "110 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 256Gb Orange eSIM", price: "115 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 256Gb Silver eSIM", price: "115 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Pro Max 512Gb Silver", price: "155 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 512Gb Orange", price: "155 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 512Gb Deep Blue", price: "155 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Pro Max 512Gb Blue eSIM", price: "127 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 512Gb Orange eSIM", price: "130 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 512Gb Silver eSIM", price: "130 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Pro Max 1Tb Blue eSIM", price: "147 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 1Tb Silver eSIM", price: "147 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 1Tb Orange eSIM", price: "147 000 ₽", img: "placeholder.jpg" },
+
+      { name: "17 Pro Max 2Tb Silver eSIM", price: "167 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 2Tb Blue eSIM", price: "167 000 ₽", img: "placeholder.jpg" },
+      { name: "17 Pro Max 2Tb Orange eSIM", price: "167 000 ₽", img: "placeholder.jpg" }
+    ]
+  }
+};
+
+// ----------------- УТИЛИТЫ -----------------
+const qs = s => document.querySelector(s);
+const qsa = s => Array.from(document.querySelectorAll(s));
+const formatPriceToNumber = p => Number(String(p).replace(/\D/g,'')) || 0;
+const formatNumberToPrice = n => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " ₽";
+
+// ----------------- STATE -----------------
+let currentCategory = "sim";
+let currentModel = null;
+let displayedList = [];
+let cart = JSON.parse(localStorage.getItem('ph_cart') || '[]');
+
+// ----------------- ЭЛЕМЕНТЫ -----------------
+const mainMenu = qs('#main-menu');
+const subMenu = qs('#sub-menu');
+const productsEl = qs('#products');
+const currentInfo = qs('#current-info');
+const searchInput = qs('#search-input');
+const sortSelect = qs('#sort');
+const clearFilters = qs('#clear-filters');
+const cartToggle = qs('#cart-toggle');
+const cartPanel = qs('#cart-panel');
+const cartItemsEl = qs('#cart-items');
+const cartCountEl = qs('#cart-count');
+const cartTotalEl = qs('#cart-total');
+const clearCartBtn = qs('#clear-cart');
+const checkoutBtn = qs('#checkout');
+
+// ----------------- РЕНДЕР ПОДМЕНЮ -----------------
+function loadSubcategories(category){
+  currentCategory = category;
+  currentModel = null;
+  subMenu.innerHTML = '';
+  productsEl.innerHTML = '';
+  currentInfo.textContent = category === 'accessories' ? 'Аксессуары' : 'Выберите модель';
+  // set active on main menu
+  qsa('#main-menu a').forEach(a => a.classList.toggle('active', a.dataset.category === category));
+
+  if(category === 'accessories'){
+    showProducts(catalog.accessories);
+    return;
+  }
+  const models = catalog[category] || {};
+  Object.keys(models).forEach(model=>{
+    const li = document.createElement('li');
+    li.textContent = model;
+    li.addEventListener('click', ()=>{
+      subMenu.querySelectorAll('li').forEach(n=>n.classList.remove('active'));
+      li.classList.add('active');
+      currentModel = model;
+      currentInfo.textContent = model + ' (' + category + ')';
+      showProducts(models[model]);
+    });
+    subMenu.appendChild(li);
+  });
+  // auto-select first model if exists
+  const first = subMenu.querySelector('li');
+  if(first) first.click();
+}
+
+// ----------------- ОТОБРАЖЕНИЕ ТОВАРОВ -----------------
+function showProducts(list){
+  displayedList = list.slice(); // copy
+  renderProducts(displayedList);
+}
+
+function renderProducts(list){
+  productsEl.innerHTML = '';
+  // apply search filter
+  const q = searchInput.value.trim().toLowerCase();
+  let filtered = list.filter(i => (i.name + ' ' + (i.price||'')).toLowerCase().includes(q));
+
+  // sorting
+  const sort = sortSelect.value;
+  if(sort === 'price-asc') filtered.sort((a,b)=> formatPriceToNumber(a.price) - formatPriceToNumber(b.price));
+  if(sort === 'price-desc') filtered.sort((a,b)=> formatPriceToNumber(b.price) - formatPriceToNumber(a.price));
+  if(sort === 'name-asc') filtered.sort((a,b)=> a.name.localeCompare(b.name,'ru'));
+
+  if(filtered.length === 0){
+    productsEl.innerHTML = '<div style="padding:18px;color:var(--muted)">Товары не найдены</div>';
+    return;
+  }
+
+  filtered.forEach(item=>{
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+      <img loading="lazy" src="${item.img}" alt="${item.name}">
+      <div class="name">${item.name}</div>
+      <div class="meta">Категория: ${currentCategory || '-'}</div>
+      <div class="price">${item.price}</div>
+      <div class="actions">
+        <button class="add-btn">В корзину</button>
+        <button class="buy-btn">Купить</button>
+      </div>
+    `;
+    const addBtn = div.querySelector('.add-btn');
+    addBtn.addEventListener('click', ()=> addToCart(item));
+    const buyBtn = div.querySelector('.buy-btn');
+    buyBtn.addEventListener('click', ()=> {
+      addToCart(item); openCart(); // быстрый переход
+    });
+    productsEl.appendChild(div);
+  });
+}
+
+// ----------------- КОРЗИНА -----------------
+function saveCart(){ localStorage.setItem('ph_cart', JSON.stringify(cart)); updateCartUI(); }
+function getCartCount(){ return cart.reduce((s,i)=>s+i.qty,0); }
+function updateCartUI(){
+  const cnt = getCartCount();
+  if(cnt>0){ cartCountEl.style.display='block'; cartCountEl.textContent = cnt; } else cartCountEl.style.display='none';
+  // render items
+  cartItemsEl.innerHTML = '';
+  if(cart.length === 0){
+    cartItemsEl.innerHTML = '<div style="color:var(--muted);padding:6px 0">Корзина пуста</div>';
+    cartTotalEl.textContent = '0 ₽';
+    return;
+  }
+  let total = 0;
+  cart.forEach((c, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'cart-item';
+    const priceNum = formatPriceToNumber(c.price);
+    total += priceNum * c.qty;
+    row.innerHTML = `
+      <img src="${c.img}" alt="${c.name}">
+      <div style="flex:1">
+        <div class="ci-name">${c.name}</div>
+        <div class="ci-price">${c.price}</div>
+        <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+          <div class="qty">
+            <button class="small-btn" data-idx="${idx}" data-op="-">−</button>
+            <div style="min-width:22px;text-align:center">${c.qty}</div>
+            <button class="small-btn" data-idx="${idx}" data-op="+">+</button>
+          </div>
+          <button class="small-btn" data-idx="${idx}" data-op="x">Удалить</button>
+        </div>
+      </div>
+    `;
+    cartItemsEl.appendChild(row);
+  });
+  cartTotalEl.textContent = formatNumberToPrice(total);
+
+  // attach qty handlers
+  cartItemsEl.querySelectorAll('.small-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      const idx = Number(btn.dataset.idx);
+      const op = btn.dataset.op;
+      if(op === '+') cart[idx].qty += 1;
+      if(op === '-') {
+        cart[idx].qty -= 1;
+        if(cart[idx].qty <= 0) cart.splice(idx,1);
+      }
+      if(op === 'x') cart.splice(idx,1);
+      saveCart();
+      saveCart(); // double to re-render
+    });
+  });
+}
+
+function addToCart(item){
+  // find existing exact match
+  const idx = cart.findIndex(c => c.name === item.name && c.price === item.price);
+  if(idx >= 0) cart[idx].qty += 1;
+  else cart.push({ name: item.name, price: item.price, img: item.img, qty: 1 });
+  saveCart();
+  // subtle pulse
+  cartToggle.animate([{ transform: 'scale(1.0)' },{ transform: 'scale(1.06)' },{ transform: 'scale(1.0)'}], { duration: 200 });
+}
+
+function openCart(){ cartPanel.style.display = 'block'; cartPanel.setAttribute('aria-hidden','false'); }
+function closeCart(){ cartPanel.style.display = 'none'; cartPanel.setAttribute('aria-hidden','true'); }
+
+// ----------------- ИНИЦИАЛИЗАЦИЯ -----------------
+qsa('#main-menu a').forEach(a => {
+  a.addEventListener('click', (e)=>{
+    e.preventDefault();
+    loadSubcategories(a.dataset.category);
+  });
+});
+
+// load default
+loadSubcategories(currentCategory);
+
+// search + sort handlers
+searchInput.addEventListener('input', ()=> renderProducts(displayedList));
+sortSelect.addEventListener('change', ()=> renderProducts(displayedList));
+clearFilters.addEventListener('click', ()=>{
+  searchInput.value = '';
+  sortSelect.value = '';
+  const active = subMenu.querySelector('li.active');
+  if(active) active.click();
+  else loadSubcategories(currentCategory);
+});
+
+// cart handlers
+cartToggle.addEventListener('click', ()=> {
+  if(cartPanel.style.display === 'block') closeCart(); else openCart();
+});
+clearCartBtn.addEventListener('click', ()=> { cart = []; saveCart(); });
+checkoutBtn.addEventListener('click', ()=> {
+  if(cart.length === 0){ alert('Корзина пуста.'); return; }
+  // пример простой обработки — эмуляция
+  alert('Заказ оформлен (демо). Общая сумма: ' + cartTotalEl.textContent + '\nСвяжитесь с менеджером для подтверждения.');
+  cart = []; saveCart();
+  closeCart();
+});
+
+// click outside cart to close
+document.addEventListener('click', (e)=> {
+  if(!cartPanel.contains(e.target) && !cartToggle.contains(e.target)) {
+    // don't auto-close on small taps while interacting — only close if open
+    if(cartPanel.style.display === 'block') closeCart();
+  }
+});
+
+// load persisted cart
+updateCartUI();
+renderProducts(displayedList);
+
+// ----------------- УПРОЩЕНИЯ ДЛЯ РАЗРАБОТЧИКА -----------------
+// Если захотите подгружать картинки по имени, замените placeholder.jpg на реальные пути.
+// Можно добавить fetch('catalog.json') и подгружать каталог отдельно.
+</script>
+</body>
+</html>
